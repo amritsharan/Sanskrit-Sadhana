@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { User, Mail, Lock, UserPlus, ArrowRight } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -83,7 +83,7 @@ export default function SignupPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="block w-full pl-10 pr-3 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-saffron-500/50 focus:border-saffron-500 transition-all"
-                                placeholder="••••••••"
+                                placeholder="........"
                             />
                         </div>
                     </div>
@@ -105,3 +105,4 @@ export default function SignupPage() {
         </div>
     );
 }
+

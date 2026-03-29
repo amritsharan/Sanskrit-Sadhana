@@ -34,9 +34,12 @@ async def root() -> Any:
 @app.post("/analyze")
 async def analyze_audio(
     audio: UploadFile = File(...),
-    shloka_text: str = Form(...)
+    shloka_text: str = Form(""),
+    ref_text: str = Form("")
 ) -> Any:
-    if not shloka_text.strip():
+    reference_text = shloka_text.strip() or ref_text.strip()
+
+    if not reference_text:
         return {"error": "shloka_text cannot be empty"}
         
     # 1. Save temp file
@@ -53,7 +56,7 @@ async def analyze_audio(
         hyp_text = result.get('text', "")
         
         # 3. G2P
-        ref_phonemes = text_to_phonemes(shloka_text)
+        ref_phonemes = text_to_phonemes(reference_text)
         hyp_phonemes = text_to_phonemes(hyp_text)
         
         # 4. Alignment
@@ -64,6 +67,7 @@ async def analyze_audio(
         
         return {
             "transcript": hyp_text,
+            "score": results["score"],
             "ref_phonemes": ref_phonemes,
             "hyp_phonemes": hyp_phonemes,
             "analysis": results
@@ -77,4 +81,4 @@ async def analyze_audio(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,8 +1,9 @@
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
-
+import ThemeLayout from "./ThemeLayout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,18 +20,12 @@ export const metadata: Metadata = {
   description: "Master the divine sounds with AI-guided precision.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="dark">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
-          {children}
+          <ThemeLayout>{children}</ThemeLayout>
         </AuthProvider>
       </body>
     </html>

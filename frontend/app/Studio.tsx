@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    Mic, Square, Play, RefreshCw, Volume2, Search, ArrowRight,
-    MessageCircle, Award, History, Info, Sparkles, LogOut, LogIn,
+    Mic, Square, RefreshCw, Volume2, Search, ArrowRight,
+    Award, History, Info, Sparkles, LogOut, LogIn,
     ChevronLeft, ChevronRight, Activity, Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,6 +35,7 @@ export default function Studio() {
 
     const [showHistory, setShowHistory] = useState(false);
     const [audioError, setAudioError] = useState<string | null>(null);
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
     // Handle custom shloka from query params
     useEffect(() => {
@@ -67,9 +68,22 @@ export default function Studio() {
             };
 
             mediaRecorder.current.onstop = () => {
-                const blob = new Blob(audioChunks.current, { type: 'audio/wav' });
-                setAudioBlob(blob);
-                setAudioUrl(URL.createObjectURL(blob));
+                if (!audioChunks.current.length) {
+                    setAudioError('No audio was recorded. Please try again.');
+                    setAudioBlob(null);
+                    setAudioUrl(null);
+                    return;
+                }
+                try {
+                    const blob = new Blob(audioChunks.current, { type: 'audio/wav' });
+                    setAudioBlob(blob);
+                    setAudioUrl(URL.createObjectURL(blob));
+                    setAudioError(null);
+                } catch (err) {
+                    setAudioError('Failed to process recorded audio.');
+                    setAudioBlob(null);
+                    setAudioUrl(null);
+                }
             };
 
             mediaRecorder.current.start();
@@ -118,15 +132,18 @@ export default function Studio() {
         setIsAnalyzing(true);
         const formData = new FormData();
         formData.append('audio', audioBlob);
-        formData.append('ref_text', selectedShloka.text);
+        formData.append('shloka_text', selectedShloka.text);
 
         try {
-            const response = await fetch('http://localhost:8000/analyze', {
+            const response = await fetch(`${apiBaseUrl}/analyze`, {
                 method: 'POST',
                 body: formData,
             });
             const data = await response.json();
-            setResults(data);
+            setResults({
+                ...data,
+                score: data.score ?? data.analysis?.score ?? 0,
+            });
         } catch (err) {
             console.error("Analysis failed:", err);
             setAudioError("Failed to connect to the analysis server. Please ensure the backend is running.");
