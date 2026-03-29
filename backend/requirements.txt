@@ -5,4 +5,3 @@ openai-whisper
 numpy
 scipy
 pydantic
-zod-to-json-schema

@@ -82,11 +82,11 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-gray-200;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-white text-black;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
@@ -109,15 +109,15 @@
   }
 
   .btn-secondary {
-    @apply glass hover:bg-white/5 border-white/10;
+    @apply bg-white/10 backdrop-blur-lg border border-white/10 hover:bg-white/5;
   }
 
   .saffron-glow {
-    @apply shadow-[0_0_20px_rgba(240, 106, 26, 0.15)];
+    @apply shadow-lg;
   }
 
   .gold-glow {
-    @apply shadow-[0_0_20px_rgba(171, 142, 23, 0.15)];
+    @apply shadow-lg;
   }
 }
 
