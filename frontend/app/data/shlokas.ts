@@ -2,10 +2,13 @@ export interface Shloka {
     id: string;
     title: string;
     source: string;
+    reference?: string;
     text: string;
     transliteration: string;
     meaning: string;
     audioUrl?: string;
+    audioReferenceUrl?: string;
+    audioSourceName?: string;
 }
 
 function decodeMojibake(value: string): string {
@@ -15,6 +18,173 @@ function decodeMojibake(value: string): string {
         return value;
     }
 }
+
+const SHLOKA_REFERENCES: Record<string, string> = {
+    "gita-2-47": "Bhagavad Gita 2.47",
+    "gayatri": "Rigveda 3.62.10",
+    "gita-2-62": "Bhagavad Gita 2.62",
+    "asato-ma": "Brihadaranyaka Upanishad 1.3.28",
+    "sarve-bhavantu": "Traditional Shanti Prayer",
+    "gita-4-7": "Bhagavad Gita 4.7",
+    "gita-6-5": "Bhagavad Gita 6.5",
+    "subhashita-1": "Hitopadesha 1.3",
+    "gita-9-27": "Bhagavad Gita 9.27",
+    "ganesha-shloka": "Traditional Invocation",
+    "shri-guru": "Guru Gita",
+    "sahana-vavatu": "Taittiriya Upanishad Shanti Mantra",
+    "gita-18-66": "Bhagavad Gita 18.66",
+    "vidya-shloka": "Subhashita",
+    "saraswati": "Traditional Saraswati Vandana",
+    "peace-prayer": "Loka Samasta Sukhinobhavantu",
+    "morning-prayer": "Karadarshanam",
+    "annapurna": "Annapurna Stotram",
+    "deepam": "Deepa Jyoti Mantra",
+    "parame-shwara": "Tvameva Mata Prayer",
+    "kalabhairava": "Kalabhairava Ashtakam",
+    "dakshinamurti": "Dakshinamurti Stotram",
+    "rama-stotram": "Rama Nama Mahima",
+    "dhyana-shloka": "Ganesha Dhyana Shloka",
+    "durga-devi": "Devi Mahatmya",
+    "lingashtakam": "Lingashtakam",
+    "gayatri-shanti": "Isha / Brihadaranyaka Invocation",
+    "hanuman": "Hanuman Chalisa Opening Doha",
+    "shivaya": "Panchakshara Mantra",
+    "mahamrityunjaya": "Rigveda 7.59.12",
+};
+
+const SHLOKA_AUDIO_REFERENCES: Record<
+    string,
+    {
+        audioUrl?: string;
+        audioReferenceUrl?: string;
+        audioSourceName: string;
+    }
+> = {
+    "gita-2-47": {
+        audioReferenceUrl: "https://www.holy-bhagavad-gita.org/chapter/2/verse/47/en/",
+        audioSourceName: "Holy Bhagavad Gita",
+    },
+    "gayatri": {
+        audioReferenceUrl: "https://www.themathesontrust.org/library/gayatri",
+        audioSourceName: "The Matheson Trust",
+    },
+    "gita-2-62": {
+        audioReferenceUrl: "https://www.holy-bhagavad-gita.org/chapter/2/verse/62/en/",
+        audioSourceName: "Holy Bhagavad Gita",
+    },
+    "asato-ma": {
+        audioReferenceUrl: "https://www.bhoomananda.org/chantings/34-asato-ma-sadgamayaa/",
+        audioSourceName: "Narayanashrama Tapovanam",
+    },
+    "sarve-bhavantu": {
+        audioReferenceUrl: "https://shlokam.org/shloka/sarve-bhavanthu-sukhinah-xdPz.htm",
+        audioSourceName: "Shlokam",
+    },
+    "gita-4-7": {
+        audioReferenceUrl: "https://www.holy-bhagavad-gita.org/chapter/4/verse/7/en/",
+        audioSourceName: "Holy Bhagavad Gita",
+    },
+    "gita-6-5": {
+        audioReferenceUrl: "https://www.holy-bhagavad-gita.org/chapter/6/verse/5/en/",
+        audioSourceName: "Holy Bhagavad Gita",
+    },
+    "gita-9-27": {
+        audioReferenceUrl: "https://www.holy-bhagavad-gita.org/chapter/9/verse/27/en/",
+        audioSourceName: "Holy Bhagavad Gita",
+    },
+    "subhashita-1": {
+        audioReferenceUrl: "https://www.vividhgyan.com/mantra/vidya-dadati-vinayam-mantra",
+        audioSourceName: "VividhGyan",
+    },
+    "ganesha-shloka": {
+        audioUrl: "https://shlokam.org/wp-content/uploads/2021/12/Vakratunda-Mahakaaya.mp3",
+        audioReferenceUrl: "https://shlokam.org/vakratunda/",
+        audioSourceName: "Shlokam",
+    },
+    "shri-guru": {
+        audioReferenceUrl: "https://shlokam.org/shloka/guru-brahma-guru-vishnu.htm",
+        audioSourceName: "Shlokam",
+    },
+    "sahana-vavatu": {
+        audioReferenceUrl: "https://www.themathesontrust.org/library/shanti-mantras-sahana-vavatu",
+        audioSourceName: "The Matheson Trust",
+    },
+    "gita-18-66": {
+        audioReferenceUrl: "https://www.holy-bhagavad-gita.org/chapter/18/verse/66/en/",
+        audioSourceName: "Holy Bhagavad Gita",
+    },
+    "vidya-shloka": {
+        audioReferenceUrl: "https://www.youtube.com/watch?v=5oRY__jduBM",
+        audioSourceName: "YouTube",
+    },
+    "morning-prayer": {
+        audioReferenceUrl: "https://shlokam.org/shloka/karaagre-vasathe.htm",
+        audioSourceName: "Shlokam",
+    },
+    "saraswati": {
+        audioReferenceUrl: "https://shlokam.org/shloka/yaakundhendhu-thushara-hara-HjWK.htm",
+        audioSourceName: "Shlokam",
+    },
+    "peace-prayer": {
+        audioReferenceUrl: "https://shlokam.org/svastiprajabhyah/",
+        audioSourceName: "Shlokam",
+    },
+    "annapurna": {
+        audioReferenceUrl: "https://shlokam.org/annapurnesadapurne/",
+        audioSourceName: "Shlokam",
+    },
+    "deepam": {
+        audioUrl: "https://shlokam.org/wp-content/uploads/2020/12/DipaJyoti.mp3",
+        audioReferenceUrl: "https://shlokam.org/dipajyoti/",
+        audioSourceName: "Shlokam",
+    },
+    "parame-shwara": {
+        audioReferenceUrl: "https://shlokam.org/shloka/tvameva-matha-cha-9atX.htm",
+        audioSourceName: "Shlokam",
+    },
+    "kalabhairava": {
+        audioReferenceUrl: "https://shlokam.org/kalabhairavashtakam/",
+        audioSourceName: "Shlokam",
+    },
+    "dakshinamurti": {
+        audioReferenceUrl: "https://shlokam.org/shloka/dakshinamurthy-stotram-S367.htm",
+        audioSourceName: "Shlokam",
+    },
+    "rama-stotram": {
+        audioReferenceUrl: "https://shlokam.org/shloka/sri-rama-rama-ramethi-c2Fz.htm",
+        audioSourceName: "Shlokam",
+    },
+    "dhyana-shloka": {
+        audioUrl: "https://shlokam.org/wp-content/uploads/2020/11/Shuklambaradharam-Vishnum.m4a",
+        audioReferenceUrl: "https://shlokam.org/shuklambaradharam/",
+        audioSourceName: "Shlokam",
+    },
+    "durga-devi": {
+        audioReferenceUrl: "https://shlokam.org/sarvamangalamangalye/",
+        audioSourceName: "Shlokam",
+    },
+    "lingashtakam": {
+        audioReferenceUrl: "https://shlokam.org/lingashtakam/",
+        audioSourceName: "Shlokam",
+    },
+    "gayatri-shanti": {
+        audioReferenceUrl: "https://www.bhoomananda.org/chantings/20-om-poornamadah-poornamidam/",
+        audioSourceName: "Narayanashrama Tapovanam",
+    },
+    "hanuman": {
+        audioReferenceUrl: "https://shlokam.org/shloka/hanuman-chalisa-0gYV.htm",
+        audioSourceName: "Shlokam",
+    },
+    "shivaya": {
+        audioUrl: "https://shlokam.org/wp-content/uploads/2020/11/ShivaShadaksharaStotram.mp3",
+        audioReferenceUrl: "https://shlokam.org/shivashadaksharastotram/",
+        audioSourceName: "Shlokam",
+    },
+    "mahamrityunjaya": {
+        audioReferenceUrl: "https://www.bhoomananda.org/videos/mrityunjaya-mantra-chant-spiritual-defence-against-covid/",
+        audioSourceName: "Narayanashrama Tapovanam",
+    },
+};
 
 const RAW_SHLOKAS: Shloka[] = [
     {
@@ -291,8 +461,14 @@ const RAW_SHLOKAS: Shloka[] = [
 
 export const SHLOKAS: Shloka[] = RAW_SHLOKAS.map((shloka) => ({
     ...shloka,
+    audioUrl:
+        SHLOKA_AUDIO_REFERENCES[shloka.id]?.audioUrl ??
+        (shloka.audioUrl && /^https?:\/\//.test(shloka.audioUrl) ? shloka.audioUrl : undefined),
+    audioReferenceUrl: SHLOKA_AUDIO_REFERENCES[shloka.id]?.audioReferenceUrl,
+    audioSourceName: SHLOKA_AUDIO_REFERENCES[shloka.id]?.audioSourceName,
     title: decodeMojibake(shloka.title),
     source: decodeMojibake(shloka.source),
+    reference: decodeMojibake(SHLOKA_REFERENCES[shloka.id] || shloka.title),
     text: decodeMojibake(shloka.text),
     transliteration: decodeMojibake(shloka.transliteration),
     meaning: decodeMojibake(shloka.meaning),

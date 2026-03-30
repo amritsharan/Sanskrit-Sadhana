@@ -22,16 +22,7 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
-    const storedTheme =
-      typeof window !== "undefined" ? localStorage.getItem("theme") : null;
-    if (storedTheme === "dark" || storedTheme === "light") {
-      setTheme(storedTheme);
-    }
-  }, []);
-
-  useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("theme", theme);
       document.documentElement.classList.toggle("dark", theme === "dark");
       document.documentElement.style.colorScheme = theme;
     }

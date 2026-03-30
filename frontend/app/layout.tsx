@@ -1,9 +1,10 @@
 
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cormorant_Garamond, Geist, Geist_Mono, Noto_Serif_Devanagari } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 import ThemeLayout from "./ThemeLayout";
+import AuthGate from "./AuthGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,6 +16,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const displaySerif = Cormorant_Garamond({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const devotionalSerif = Noto_Serif_Devanagari({
+  variable: "--font-serif",
+  subsets: ["devanagari", "latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
 export const metadata: Metadata = {
   title: "Sanskrita Sadhana",
   description: "Master the divine sounds with AI-guided precision.",
@@ -22,10 +35,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" className="dark">
+      <body className={`${geistSans.variable} ${geistMono.variable} ${displaySerif.variable} ${devotionalSerif.variable} antialiased`}>
         <AuthProvider>
-          <ThemeLayout>{children}</ThemeLayout>
+          <ThemeLayout>
+            <AuthGate>{children}</AuthGate>
+          </ThemeLayout>
         </AuthProvider>
       </body>
     </html>
