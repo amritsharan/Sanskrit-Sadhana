@@ -1,6 +1,6 @@
-# Sanskrita Sadhana (संस्कृत साधना)
+# Sanskrit Sadhana (संस्कृत साधना)
 
-Master the divine sounds of Sanskrit with AI-guided precision. Sanskrita Sadhana is an intelligent pronunciation evaluator that helps users perfect their recitation of ancient shlokas through advanced phonetic analysis.
+Master the divine sounds of Sanskrit with AI-guided precision. Sanskrit Sadhana is an intelligent pronunciation evaluator that helps users perfect their recitation of ancient shlokas through advanced phonetic analysis.
 
 ## 🌟 Features
 
