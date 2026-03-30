@@ -29,7 +29,7 @@ export default function LoginPage() {
             <div className="w-full max-w-md z-10 glass rounded-3xl p-8 border border-white/10 shadow-2xl scale-in">
                 <div className="text-center mb-8">
                     <Link href="/" className="inline-block mb-4">
-                        <h1 className="text-3xl font-bold font-display text-gradient">Sanskrita</h1>
+                        <h1 className="text-3xl font-bold font-display text-gradient">Sanskrit Sadhana</h1>
                     </Link>
                     <h2 className="text-xl font-semibold text-white">Welcome Back</h2>
                     <p className="text-white/50 mt-2 text-sm">Continue your journey of pronunciation mastery</p>
@@ -83,7 +83,7 @@ export default function LoginPage() {
                 </form>
 
                 <p className="text-center mt-8 text-sm text-white/50">
-                    New to Sanskrita? {' '}
+                    New to Sanskrit Sadhana? {' '}
                     <Link href="/signup" className="text-saffron-500 font-semibold hover:text-saffron-400">Join now</Link>
                 </p>
             </div>
