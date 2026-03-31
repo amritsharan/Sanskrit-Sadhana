@@ -1,7 +1,7 @@
 import os
 import sys
 import uuid
-from typing import Any
+from typing import Any, Optional
 
 # Ensure local imports work reliably
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -22,14 +22,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load Whisper model once
-MODEL_NAME = "base"
-print(f"Loading Whisper model: {MODEL_NAME}...")
-model = whisper.load_model(MODEL_NAME)
+# Render free tier is memory-constrained, so default to a smaller model.
+# You can override this in hosting settings with WHISPER_MODEL=base, small, etc.
+MODEL_NAME = os.getenv("WHISPER_MODEL", "tiny")
+model: Optional[Any] = None
+
+
+def get_model() -> Any:
+    global model
+    if model is None:
+        print(f"Loading Whisper model: {MODEL_NAME}...")
+        model = whisper.load_model(MODEL_NAME)
+    return model
 
 @app.get("/")
 async def root() -> Any:
-    return {"status": "online", "model": MODEL_NAME}
+    return {"status": "online", "model": MODEL_NAME, "model_loaded": model is not None}
 
 @app.post("/analyze")
 async def analyze_audio(
@@ -51,8 +59,9 @@ async def analyze_audio(
         f.write(await audio.read())
         
     try:
+        model_instance = get_model()
         # 2. Transcription
-        result: Any = model.transcribe(temp_path)
+        result: Any = model_instance.transcribe(temp_path)
         hyp_text = result.get('text', "")
         
         # 3. G2P
