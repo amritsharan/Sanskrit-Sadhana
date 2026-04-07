@@ -68,3 +68,44 @@ Master the divine sounds of Sanskrit with AI-guided precision. Sanskrit Sadhana 
 
 ---
 *Developed with devotion to the preserving the sounds of the ancient world.*
+
+## Academic Write-Up (Draft)
+
+### Abstract
+Sanskrit Sadhana is an AI-assisted pronunciation learning platform designed to help users improve Sanskrit shloka recitation through structured, feedback-driven practice. Existing learning methods often rely on passive listening or generic correction, which makes precise pronunciation improvement difficult for beginners. The proposed system combines reference audio, grapheme-to-phoneme processing, and alignment-based scoring to provide detailed phonetic feedback at the segment level. By giving actionable correction points rather than only a final score, the platform supports iterative improvement and self-paced learning. The expected outcome is better pronunciation accuracy, improved learner confidence, and higher engagement in Sanskrit practice.
+
+### Literature Survey
+Research in computer-assisted language learning highlights that pronunciation improvement is most effective when learners receive immediate and specific feedback. Automatic speech evaluation systems in modern language learning often use phoneme-level comparison between user speech and a reference signal. In Indic language contexts, transliteration pipelines and grapheme-to-phoneme conversion are frequently used to bridge script input and pronunciation models. Alignment-based approaches are also common in speech processing because they can reveal where and how the learner's utterance deviates from the target sequence. Prior systems demonstrate that accuracy and learner outcomes improve when objective scoring is combined with understandable feedback. However, many tools remain either language-generic or weak in script-aware Sanskrit pronunciation workflows.
+
+### Limitations of the Existing Works
+1. Many available tools provide only overall pronunciation scores without fine-grained phonetic error localization.
+2. Existing Sanskrit-focused solutions are limited in interactivity and often lack a guided correction loop.
+3. Generic language apps are not optimized for Sanskrit phonology and script-specific pronunciation nuances.
+4. Some systems do not support easy custom input with transliteration-to-Devanagari workflows.
+5. Feedback is frequently delayed or not pedagogically actionable for consistent practice.
+
+### Novelty of the Proposed Work
+1. Integration of Sanskrit-specific grapheme-to-phoneme logic with alignment-driven pronunciation evaluation.
+2. Segment-level, interpretable feedback showing exactly which phonetic units need correction.
+3. Combined support for predefined shlokas and custom transliterated inputs.
+4. A modern, learner-friendly interface that promotes repeated guided practice.
+5. End-to-end flow from text selection to reference listening, recording, scoring, and revision.
+
+### Problem Statement
+Learners of Sanskrit often struggle to achieve accurate pronunciation because traditional resources do not provide immediate, precise, and personalized feedback on phonetic mistakes. There is a need for a practical digital system that evaluates recitation quality against a reliable reference and provides clear guidance to help users correct pronunciation errors effectively.
+
+### Objectives
+1. To build an AI-assisted Sanskrit pronunciation evaluation system for guided shloka practice.
+2. To provide phoneme-level or segment-level diagnostic feedback instead of only aggregate scores.
+3. To support both curated shloka content and custom transliterated user inputs.
+4. To offer a responsive and accessible interface that encourages repeated learning sessions.
+5. To improve learner pronunciation quality through iterative feedback and measurable scoring.
+
+### Proposed Design
+1. Input Layer: User selects a predefined shloka or enters custom text in transliteration.
+2. Text Processing Layer: Transliteration is converted to Devanagari and transformed through grapheme-to-phoneme mapping.
+3. Reference Layer: The system loads high-quality reference audio and phonetic targets for comparison.
+4. Recording Layer: User recitation is captured and preprocessed for analysis.
+5. Alignment and Scoring Layer: Learner audio is aligned with reference phonetic units to compute similarity and detect deviations.
+6. Feedback Layer: The system returns detailed, actionable pronunciation insights for correction.
+7. Progress Layer: Session outcomes are persisted to support learner tracking over time.

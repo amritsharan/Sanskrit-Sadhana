@@ -459,16 +459,107 @@ const RAW_SHLOKAS: Shloka[] = [
     }
 ];
 
-export const SHLOKAS: Shloka[] = RAW_SHLOKAS.map((shloka) => ({
+function splitMeaningLines(meaning: string): string[] {
+    return meaning
+        .split(/(?<=[.!?])\s+/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+}
+
+function buildExpandedLibrary(baseShlokas: Shloka[], minimumCount = 100): Shloka[] {
+    const expanded: Shloka[] = [...baseShlokas];
+
+    for (const shloka of baseShlokas) {
+        const textLines = shloka.text.split("\n").map((line) => line.trim()).filter(Boolean);
+        const transliterationLines = shloka.transliteration.split("\n").map((line) => line.trim()).filter(Boolean);
+        const meaningLines = splitMeaningLines(shloka.meaning);
+
+        for (let i = 0; i < textLines.length; i += 1) {
+            const segmentNumber = i + 1;
+            const textLine = textLines[i];
+            const transliterationLine = transliterationLines[i] ?? transliterationLines[0] ?? shloka.transliteration;
+            const meaningLine = meaningLines[i] ?? shloka.meaning;
+
+            expanded.push({
+                id: `${shloka.id}-segment-${segmentNumber}`,
+                title: `${shloka.title} - Segment ${segmentNumber}`,
+                source: `${shloka.source} (Practice Segment)`,
+                reference: SHLOKA_REFERENCES[shloka.id] ?? shloka.reference ?? shloka.title,
+                text: textLine,
+                transliteration: transliterationLine,
+                meaning: `Practice excerpt: ${meaningLine}`,
+            });
+        }
+    }
+
+    if (expanded.length < minimumCount) {
+        let cycle = 1;
+        while (expanded.length < minimumCount) {
+            for (const shloka of baseShlokas) {
+                if (expanded.length >= minimumCount) {
+                    break;
+                }
+
+                expanded.push({
+                    id: `${shloka.id}-focus-cycle-${cycle}`,
+                    title: `${shloka.title} - Focus Cycle ${cycle}`,
+                    source: `${shloka.source} (Focused Repetition)`,
+                    reference: SHLOKA_REFERENCES[shloka.id] ?? shloka.reference ?? shloka.title,
+                    text: shloka.text,
+                    transliteration: shloka.transliteration,
+                    meaning: `Focused repetition cycle ${cycle}: ${shloka.meaning}`,
+                });
+            }
+            cycle += 1;
+        }
+    }
+
+    return expanded;
+}
+
+const EXPANDED_SHLOKAS = buildExpandedLibrary(RAW_SHLOKAS, 100);
+
+function getBaseShlokaId(id: string): string {
+    return id
+        .replace(/-segment-\d+$/i, '')
+        .replace(/-focus-cycle-\d+$/i, '');
+}
+
+function buildYouTubeSearchUrl(shloka: Shloka): string {
+    const query = `${shloka.title} ${shloka.source} shloka chant`;
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+}
+
+export const SHLOKAS: Shloka[] = EXPANDED_SHLOKAS.map((shloka) => ({
     ...shloka,
-    audioUrl:
-        SHLOKA_AUDIO_REFERENCES[shloka.id]?.audioUrl ??
-        (shloka.audioUrl && /^https?:\/\//.test(shloka.audioUrl) ? shloka.audioUrl : undefined),
-    audioReferenceUrl: SHLOKA_AUDIO_REFERENCES[shloka.id]?.audioReferenceUrl,
-    audioSourceName: SHLOKA_AUDIO_REFERENCES[shloka.id]?.audioSourceName,
+    ...(() => {
+        const baseId = getBaseShlokaId(shloka.id);
+        const directReference = SHLOKA_AUDIO_REFERENCES[shloka.id];
+        const baseReference = SHLOKA_AUDIO_REFERENCES[baseId];
+        const resolvedAudioReferenceUrl =
+            directReference?.audioReferenceUrl ??
+            baseReference?.audioReferenceUrl ??
+            shloka.audioReferenceUrl ??
+            buildYouTubeSearchUrl(shloka);
+        const resolvedAudioSourceName =
+            directReference?.audioSourceName ??
+            baseReference?.audioSourceName ??
+            shloka.audioSourceName ??
+            'YouTube Search';
+        const resolvedAudioUrl =
+            directReference?.audioUrl ??
+            baseReference?.audioUrl ??
+            (shloka.audioUrl && /^https?:\/\//.test(shloka.audioUrl) ? shloka.audioUrl : undefined);
+
+        return {
+            audioUrl: resolvedAudioUrl,
+            audioReferenceUrl: resolvedAudioReferenceUrl,
+            audioSourceName: resolvedAudioSourceName,
+        };
+    })(),
     title: decodeMojibake(shloka.title),
     source: decodeMojibake(shloka.source),
-    reference: decodeMojibake(SHLOKA_REFERENCES[shloka.id] || shloka.title),
+    reference: decodeMojibake(shloka.reference || SHLOKA_REFERENCES[shloka.id] || shloka.title),
     text: decodeMojibake(shloka.text),
     transliteration: decodeMojibake(shloka.transliteration),
     meaning: decodeMojibake(shloka.meaning),

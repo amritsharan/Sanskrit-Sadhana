@@ -29,7 +29,7 @@ const devotionalSerif = Noto_Serif_Devanagari({
 });
 
 export const metadata: Metadata = {
-  title: "Sanskrita Sadhana",
+  title: "Sanskrit Sadhana",
   description: "Master the divine sounds with AI-guided precision.",
 };
 

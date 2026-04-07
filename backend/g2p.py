@@ -68,7 +68,91 @@ PHONEME_DATA: Dict[str, PhonemeInfo] = {
     'ṣ': {'ph': 'ʂ', 'type': 'consonant', 'place': 'murdhanya', 'voicing': 'aghosha'},
     's': {'ph': 's', 'type': 'consonant', 'place': 'dantya', 'voicing': 'aghosha'},
     'h': {'ph': 'h', 'type': 'consonant', 'place': 'kanthya', 'voicing': 'ghoshavat'},
+
+    # Common Sanskrit markers
+    'ṃ': {'ph': 'm', 'type': 'consonant', 'place': 'oshthya', 'voicing': 'ghoshavat', 'nasal': True},
+    'ḥ': {'ph': 'h', 'type': 'consonant', 'place': 'kanthya', 'voicing': 'ghoshavat'},
 }
+
+DEVANAGARI_VOWELS: Dict[str, str] = {
+    'अ': 'a', 'आ': 'ā', 'इ': 'i', 'ई': 'ī', 'उ': 'u', 'ऊ': 'ū',
+    'ऋ': 'ṛ', 'ॠ': 'ṝ', 'ए': 'e', 'ऐ': 'ai', 'ओ': 'o', 'औ': 'au',
+}
+
+DEVANAGARI_MATRAS: Dict[str, str] = {
+    'ा': 'ā', 'ि': 'i', 'ी': 'ī', 'ु': 'u', 'ू': 'ū',
+    'ृ': 'ṛ', 'ॄ': 'ṝ', 'े': 'e', 'ै': 'ai', 'ो': 'o', 'ौ': 'au',
+}
+
+DEVANAGARI_CONSONANTS: Dict[str, str] = {
+    'क': 'k', 'ख': 'kʰ', 'ग': 'g', 'घ': 'gʰ', 'ङ': 'ŋ',
+    'च': 'c', 'छ': 'cʰ', 'ज': 'j', 'झ': 'jʰ', 'ञ': 'ɲ',
+    'ट': 'ʈ', 'ठ': 'ʈʰ', 'ड': 'ɖ', 'ढ': 'ɖʰ', 'ण': 'ɳ',
+    'त': 't', 'थ': 'tʰ', 'द': 'd', 'ध': 'dʰ', 'न': 'n',
+    'प': 'p', 'फ': 'pʰ', 'ब': 'b', 'भ': 'bʰ', 'म': 'm',
+    'य': 'y', 'र': 'r', 'ल': 'l', 'व': 'v',
+    'श': 'ś', 'ष': 'ṣ', 'स': 's', 'ह': 'h', 'ळ': 'l',
+}
+
+DEVANAGARI_PUNCTUATION = set(['।', '॥', ',', '.', ';', ':', '!', '?', '"', "'", '(', ')', '[', ']'])
+VIRAMA = '्'
+
+
+def _append_phoneme(output: List[PhonemeInfo], key: str) -> None:
+    phoneme = PHONEME_DATA.get(key)
+    if phoneme is not None:
+        output.append(phoneme)
+
+
+def devanagari_to_phonemes(text: str) -> List[PhonemeInfo]:
+    output: List[PhonemeInfo] = []
+    i = 0
+
+    while i < len(text):
+        ch = text[i]
+
+        if ch.isspace() or ch in DEVANAGARI_PUNCTUATION:
+            i += 1
+            continue
+
+        if ch in DEVANAGARI_VOWELS:
+            _append_phoneme(output, DEVANAGARI_VOWELS[ch])
+            i += 1
+            continue
+
+        if ch in ('ं', 'ँ'):
+            _append_phoneme(output, 'ṃ')
+            i += 1
+            continue
+
+        if ch == 'ः':
+            _append_phoneme(output, 'ḥ')
+            i += 1
+            continue
+
+        if ch in DEVANAGARI_CONSONANTS:
+            consonant_key = DEVANAGARI_CONSONANTS[ch]
+            _append_phoneme(output, consonant_key)
+
+            next_char = text[i + 1] if i + 1 < len(text) else ''
+
+            if next_char == VIRAMA:
+                i += 2
+                continue
+
+            if next_char in DEVANAGARI_MATRAS:
+                _append_phoneme(output, DEVANAGARI_MATRAS[next_char])
+                i += 2
+                continue
+
+            # Inherent schwa for bare consonants.
+            _append_phoneme(output, 'a')
+            i += 1
+            continue
+
+        i += 1
+
+    return output
 
 # Common transliteration maps
 REPLACEMENTS: List[Tuple[str, str]] = [
@@ -80,6 +164,9 @@ REPLACEMENTS: List[Tuple[str, str]] = [
 
 def text_to_phonemes(text: str) -> List[PhonemeInfo]:
     """Convert IAST/Latin transliteration to detailed phoneme objects."""
+    if any('\u0900' <= ch <= '\u097F' for ch in str(text)):
+        return devanagari_to_phonemes(str(text))
+
     clean_text: str = str(text).strip().lower()
     for pattern, replacement in REPLACEMENTS:
         clean_text = clean_text.replace(pattern, ' ' + replacement + ' ')
