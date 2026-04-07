@@ -5,3 +5,5 @@ openai-whisper
 numpy
 scipy
 pydantic
+transformers
+sentencepiece

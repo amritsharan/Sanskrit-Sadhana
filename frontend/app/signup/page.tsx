@@ -30,7 +30,7 @@ export default function SignupPage() {
             <div className="w-full max-w-md z-10 glass rounded-3xl p-8 border border-white/10 shadow-2xl scale-in">
                 <div className="text-center mb-8">
                     <Link href="/" className="inline-block mb-4">
-                        <h1 className="text-3xl font-bold font-display text-gradient">Sanskrita</h1>
+                        <h1 className="text-3xl font-bold font-display text-gradient">Sanskrit</h1>
                     </Link>
                     <h2 className="text-xl font-semibold text-white">Create Account</h2>
                     <p className="text-white/50 mt-2 text-sm">Start your journey through ancient phonetics</p>

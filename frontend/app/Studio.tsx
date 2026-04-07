@@ -21,11 +21,36 @@ interface AnalysisError {
     ref_idx: number;
 }
 
+interface WordFeedback {
+    word: string;
+    word_index: number;
+    issue_count: number;
+    severity: 'low' | 'medium' | 'high';
+}
+
+interface WordMismatch {
+    mismatch_type: 'replace' | 'delete' | 'insert';
+    expected_word: string | null;
+    pronounced_word: string | null;
+    expected_index: number | null;
+    pronounced_index: number | null;
+}
+
+type MismatchSeverity = 'low' | 'medium' | 'high';
+
 interface AnalysisResult {
     score: number;
     matches: number;
     total_ref: number;
     errors: AnalysisError[];
+    ref_mismatches?: number;
+    op_counts?: {
+        sub?: number;
+        del?: number;
+        ins?: number;
+    };
+    word_feedback?: WordFeedback[];
+    word_mismatches?: WordMismatch[];
 }
 
 interface PronunciationResult {
@@ -66,11 +91,13 @@ function getScoreBreakdown(results: PronunciationResult | null) {
     const totalRef = analysis?.total_ref ?? 0;
     const matches = analysis?.matches ?? 0;
     const errors = analysis?.errors ?? [];
+    const refMismatches = analysis?.ref_mismatches ?? Math.max(0, totalRef - matches);
+    const extraSounds = analysis?.op_counts?.ins ?? 0;
     const alignment = totalRef > 0 ? Math.round((matches / totalRef) * 100) : 0;
-    const consistency = Math.max(0, 100 - errors.length * 8);
+    const consistency = Math.max(0, 100 - refMismatches * 6);
     const clarity = Math.max(0, Math.min(100, Math.round((results?.score ?? 0) * 0.85 + alignment * 0.15)));
 
-    return { totalRef, matches, errors, alignment, consistency, clarity };
+    return { totalRef, matches, errors, refMismatches, extraSounds, alignment, consistency, clarity };
 }
 
 function MetricBar({ label, value, tone }: { label: string; value: number; tone: string }) {
@@ -117,6 +144,58 @@ function InsightStat({
     );
 }
 
+function tokenizeTransliterationWords(text: string): string[] {
+    return text
+        .replace(/\n/g, ' ')
+        .replace(/[|।॥]/g, ' ')
+        .split(/\s+/)
+        .map((word) => word.trim())
+        .filter(Boolean);
+}
+
+function getSeverityClasses(severity: MismatchSeverity) {
+    if (severity === 'high') {
+        return {
+            word: 'bg-rose-500/25 text-rose-100 ring-1 ring-rose-400/40',
+            item: 'border-rose-500/35 bg-rose-500/15 text-rose-100',
+            badge: 'bg-rose-500/20 text-rose-200 border-rose-500/40',
+        };
+    }
+
+    if (severity === 'medium') {
+        return {
+            word: 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/40',
+            item: 'border-amber-500/30 bg-amber-500/12 text-amber-100',
+            badge: 'bg-amber-500/20 text-amber-200 border-amber-500/40',
+        };
+    }
+
+    return {
+        word: 'bg-sky-500/20 text-sky-100 ring-1 ring-sky-400/35',
+        item: 'border-sky-500/30 bg-sky-500/10 text-sky-100',
+        badge: 'bg-sky-500/20 text-sky-200 border-sky-500/40',
+    };
+}
+
+function getMismatchDefaultSeverity(mismatchType: WordMismatch['mismatch_type']): MismatchSeverity {
+    if (mismatchType === 'delete') return 'high';
+    if (mismatchType === 'replace') return 'medium';
+    return 'low';
+}
+
+function getMismatchTooltipText(item: WordMismatch, severity: MismatchSeverity): string {
+    if (item.mismatch_type === 'replace' && item.expected_word && item.pronounced_word) {
+        return `Expected "${item.expected_word}", but heard "${item.pronounced_word}" (${severity} severity).`;
+    }
+    if (item.mismatch_type === 'delete' && item.expected_word) {
+        return `Expected word "${item.expected_word}" was not detected in your recitation (${severity} severity).`;
+    }
+    if (item.mismatch_type === 'insert' && item.pronounced_word) {
+        return `Extra spoken word "${item.pronounced_word}" is not part of the reference (${severity} severity).`;
+    }
+    return `Word-level mismatch detected (${severity} severity).`;
+}
+
 export default function Studio() {
     const [selectedShloka, setSelectedShloka] = useState<Shloka | null>(null);
     const [isRecording, setIsRecording] = useState(false);
@@ -144,6 +223,32 @@ export default function Studio() {
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
     const scoreSummary = results ? getScoreSummary(results.score ?? 0) : null;
     const scoreBreakdown = results ? getScoreBreakdown(results) : null;
+    const highlightedWordIndexes = new Set<number>([
+        ...(results?.analysis?.word_feedback?.map((item) => item.word_index) ?? []),
+        ...((results?.analysis?.word_mismatches ?? [])
+            .map((item) => item.expected_index)
+            .filter((idx): idx is number => typeof idx === 'number')),
+    ]);
+    const wordSeverityByIndex = new Map<number, MismatchSeverity>();
+    (results?.analysis?.word_feedback ?? []).forEach((item) => {
+        const existing = wordSeverityByIndex.get(item.word_index);
+        if (existing === 'high') return;
+        if (existing === 'medium' && item.severity === 'low') return;
+        wordSeverityByIndex.set(item.word_index, item.severity);
+    });
+
+    (results?.analysis?.word_mismatches ?? []).forEach((item) => {
+        if (typeof item.expected_index !== 'number') return;
+        const existing = wordSeverityByIndex.get(item.expected_index);
+        const fallback = getMismatchDefaultSeverity(item.mismatch_type);
+        if (existing === 'high') return;
+        if (existing === 'medium' && fallback === 'low') return;
+        if (!existing || fallback === 'high' || (fallback === 'medium' && existing === 'low')) {
+            wordSeverityByIndex.set(item.expected_index, fallback);
+        }
+    });
+
+    const transliterationWords = tokenizeTransliterationWords(selectedShloka?.transliteration || '');
 
     useEffect(() => {
         setInsightPage(1);
@@ -153,6 +258,7 @@ export default function Studio() {
     useEffect(() => {
         const customText = searchParams.get('customText');
         const customIAST = searchParams.get('customIAST');
+        const customMeaning = searchParams.get('customMeaning');
         const isCustom = searchParams.get('isCustom');
 
         if (customText) {
@@ -160,7 +266,8 @@ export default function Studio() {
                 if (
                     current?.id === 'custom' &&
                     current.text === customText &&
-                    current.transliteration === (customIAST || '')
+                    current.transliteration === (customIAST || '') &&
+                    current.meaning === (customMeaning || '')
                 ) {
                     return current;
                 }
@@ -172,7 +279,7 @@ export default function Studio() {
                     reference: isCustom ? 'Self-composed Passage' : 'Imported Passage',
                     text: customText,
                     transliteration: customIAST || '',
-                    meaning: 'A custom shloka for focused phonetic refinement.'
+                    meaning: customMeaning || 'A custom shloka for focused phonetic refinement.'
                 };
             });
         } else if (SHLOKAS.length > 0) {
@@ -258,6 +365,7 @@ export default function Studio() {
         const formData = new FormData();
         formData.append('audio', audioBlob);
         formData.append('shloka_text', selectedShloka.text);
+        formData.append('ref_text', selectedShloka.transliteration || selectedShloka.text);
 
         try {
             const response = await fetch(`${apiBaseUrl}/analyze`, {
@@ -347,7 +455,7 @@ export default function Studio() {
             pdf.setTextColor(245, 158, 11);
             pdf.setFont("helvetica", "bold");
             pdf.setFontSize(13);
-            pdf.text("SANSKRITA SADHANA", marginX, cursorY);
+            pdf.text("SANSKRIT SADHANA", marginX, cursorY);
             cursorY += 26;
 
             pdf.setTextColor(255, 255, 255);
@@ -385,7 +493,8 @@ export default function Studio() {
             pdf.setFont("helvetica", "normal");
             writeWrapped(`Matched phonemes: ${scoreBreakdown.matches}`, 11, [255, 255, 255], 16);
             writeWrapped(`Expected phonemes: ${scoreBreakdown.totalRef}`, 11, [255, 255, 255], 16);
-            writeWrapped(`Detected mismatches: ${scoreBreakdown.errors.length}`, 11, [255, 255, 255], 16);
+            writeWrapped(`Detected mismatches: ${scoreBreakdown.refMismatches}`, 11, [255, 255, 255], 16);
+            writeWrapped(`Extra detected sounds: ${scoreBreakdown.extraSounds}`, 11, [203, 213, 225], 16);
             writeWrapped(`Alignment: ${scoreBreakdown.alignment}%`, 11, [203, 213, 225], 16);
             writeWrapped(`Consistency: ${scoreBreakdown.consistency}%`, 11, [203, 213, 225], 16);
             writeWrapped(`Clarity: ${scoreBreakdown.clarity}%`, 11, [203, 213, 225], 16);
@@ -541,7 +650,7 @@ export default function Studio() {
             }
 
             const safeTitle = selectedShloka.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-            pdf.save(`${safeTitle || "sanskrita-sadhana"}-report.pdf`);
+            pdf.save(`${safeTitle || "sanskrit-sadhana"}-report.pdf`);
         } finally {
             setIsDownloadingReport(false);
         }
@@ -610,7 +719,7 @@ export default function Studio() {
                             Gurukula Recitation Chamber
                         </div>
                         <h1 className="mt-5 font-display text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
-                            Sanskrita <span className="text-gradient">Sadhana</span>
+                            Sanskrit <span className="text-gradient">Sadhana</span>
                         </h1>
                         <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
                             Enter a practice hall shaped like a modern gurukula: sacred text in front of you, guided
@@ -764,7 +873,97 @@ export default function Studio() {
                                         <p className="text-3xl font-serif leading-relaxed mb-6">{selectedShloka.text}</p>
                                         <div className="h-px w-24 bg-gradient-to-r from-transparent via-primary/30 to-transparent mx-auto lg:mx-0 mb-6"></div>
                                         <span className="text-xs font-bold uppercase tracking-widest text-primary/60 mb-2 block">Transliteration</span>
-                                        <p className="text-xl italic text-muted-foreground">{selectedShloka.transliteration}</p>
+                                        <p className="text-xl italic text-muted-foreground leading-relaxed">
+                                            {transliterationWords.map((word, index) => (
+                                                (() => {
+                                                    const severity = wordSeverityByIndex.get(index) ?? 'low';
+                                                    const severityClasses = getSeverityClasses(severity);
+                                                    const tooltipText = highlightedWordIndexes.has(index)
+                                                        ? `Pronunciation issue on "${word}" (${severity} severity).`
+                                                        : '';
+
+                                                    return (
+                                                <span
+                                                    key={`${word}-${index}`}
+                                                    title={tooltipText}
+                                                    className={cn(
+                                                        'mr-2 inline-block rounded-md px-1 py-0.5 transition-colors',
+                                                        highlightedWordIndexes.has(index)
+                                                            ? severityClasses.word
+                                                            : 'text-muted-foreground'
+                                                    )}
+                                                >
+                                                    {word}
+                                                </span>
+                                                    );
+                                                })()
+                                            ))}
+                                        </p>
+                                        {(results?.analysis?.word_mismatches?.length ?? 0) > 0 ? (
+                                            <div className="mt-3 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2">
+                                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-rose-200">Word-level correction</p>
+                                                <div className="mt-2 flex flex-wrap gap-2">
+                                                    {(['high', 'medium', 'low'] as MismatchSeverity[]).map((level) => {
+                                                        const classes = getSeverityClasses(level);
+                                                        return (
+                                                            <span
+                                                                key={level}
+                                                                className={cn('rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em]', classes.badge)}
+                                                            >
+                                                                {level}
+                                                            </span>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <div className="mt-2 space-y-1">
+                                                    {(results?.analysis?.word_mismatches ?? []).slice(0, 6).map((item, idx) => {
+                                                        const severity =
+                                                            (typeof item.expected_index === 'number' && wordSeverityByIndex.get(item.expected_index)) ||
+                                                            getMismatchDefaultSeverity(item.mismatch_type);
+                                                        const classes = getSeverityClasses(severity);
+                                                        const tooltipText = getMismatchTooltipText(item, severity);
+
+                                                        if (item.mismatch_type === 'replace' && item.expected_word && item.pronounced_word) {
+                                                            return (
+                                                                <p
+                                                                    key={`${item.expected_index}-${idx}`}
+                                                                    title={tooltipText}
+                                                                    className={cn('rounded-md border px-2 py-1 text-xs', classes.item)}
+                                                                >
+                                                                    &quot;{item.expected_word}&quot; pronounced as &quot;{item.pronounced_word}&quot;
+                                                                </p>
+                                                            );
+                                                        }
+
+                                                        if (item.mismatch_type === 'delete' && item.expected_word) {
+                                                            return (
+                                                                <p
+                                                                    key={`${item.expected_index}-${idx}`}
+                                                                    title={tooltipText}
+                                                                    className={cn('rounded-md border px-2 py-1 text-xs', classes.item)}
+                                                                >
+                                                                    Missing word: &quot;{item.expected_word}&quot;
+                                                                </p>
+                                                            );
+                                                        }
+
+                                                        if (item.mismatch_type === 'insert' && item.pronounced_word) {
+                                                            return (
+                                                                <p
+                                                                    key={`${item.pronounced_index}-${idx}`}
+                                                                    title={tooltipText}
+                                                                    className={cn('rounded-md border px-2 py-1 text-xs', classes.item)}
+                                                                >
+                                                                    Extra spoken word: &quot;{item.pronounced_word}&quot;
+                                                                </p>
+                                                            );
+                                                        }
+
+                                                        return null;
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ) : null}
                                         <div className="mt-5 inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.24em] text-primary/75">
                                             Reference: {selectedShloka.reference || selectedShloka.source}
                                         </div>
@@ -952,7 +1151,7 @@ export default function Studio() {
                                             <div className="grid gap-4 md:grid-cols-3">
                                                 <InsightStat title="Matched" value={scoreBreakdown?.matches ?? 0} caption="Aligned phonemes" accentClassName="from-transparent via-emerald-400/80 to-transparent" />
                                                 <InsightStat title="Reference" value={scoreBreakdown?.totalRef ?? 0} caption="Expected phonemes" accentClassName="from-transparent via-primary/80 to-transparent" />
-                                                <InsightStat title="Issues" value={scoreBreakdown?.errors.length ?? 0} caption="Detected mismatches" accentClassName="from-transparent via-rose-400/80 to-transparent" />
+                                                <InsightStat title="Issues" value={scoreBreakdown?.refMismatches ?? 0} caption="Reference-side mismatches" accentClassName="from-transparent via-rose-400/80 to-transparent" />
                                             </div>
 
                                             <div className="rounded-[1.6rem] border border-white/10 bg-black/10 p-5 dark:bg-white/5">

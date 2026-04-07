@@ -1,29 +1,30 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Sparkles, Play, Type, Info, Wand2 } from 'lucide-react';
+import { ArrowLeft, Sparkles, Play, Type, Info, Wand2, BookOpen } from 'lucide-react';
 import { transliterate } from '../utils/transliterate';
+import { inferCustomMeaning } from '../utils/meaning';
 
 export default function CustomPracticePage() {
     const [englishText, setEnglishText] = useState('');
-    const [sanskritText, setSanskritText] = useState('');
     const router = useRouter();
-
-    useEffect(() => {
-        // Automatically transliterate whenever englishText changes
-        setSanskritText(transliterate(englishText));
-    }, [englishText]);
+    const sanskritText = transliterate(englishText);
+    const customMeaning = englishText.trim() ? inferCustomMeaning(englishText) : '';
 
     const handleStartPractice = () => {
         if (!englishText.trim()) return;
 
+        const meaning = customMeaning || inferCustomMeaning(englishText);
+        const customShlokaText = transliterate(englishText);
+
         // Encode the content to pass to the Studio
         const params = new URLSearchParams({
-            customText: sanskritText,
+            customText: customShlokaText,
             customIAST: englishText,
+            customMeaning: meaning,
             isCustom: 'true'
         });
 
@@ -117,6 +118,16 @@ export default function CustomPracticePage() {
                             ) : (
                                 <p className="text-white/20 italic">The divine script will appear here...</p>
                             )}
+                        </div>
+
+                        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.28em] text-gold-400/80">
+                                <BookOpen className="h-3.5 w-3.5" />
+                                Meaning preview
+                            </div>
+                            <p className="mt-3 text-sm leading-6 text-white/70">
+                                {customMeaning || 'Enter a passage to see a meaning preview.'}
+                            </p>
                         </div>
 
                         <button
