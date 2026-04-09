@@ -1,0 +1,4 @@
+backend/__pycache__/
+backend/temp_uploads/
+*.py[cod]
+.venv/

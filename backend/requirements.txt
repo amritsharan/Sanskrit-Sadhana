@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+openai-whisper
+numpy
+scipy
+pydantic
+transformers
+sentencepiece
