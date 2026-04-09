@@ -1,6 +1,6 @@
 
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Geist, Geist_Mono, Noto_Serif_Devanagari, Noto_Sans_Devanagari } from "next/font/google";
+import { Cormorant_Garamond, Geist, Geist_Mono, Noto_Serif_Devanagari } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 import ThemeLayout from "./ThemeLayout";
@@ -28,12 +28,6 @@ const devotionalSerif = Noto_Serif_Devanagari({
   weight: ["400", "500", "600", "700"],
 });
 
-const devanagariSans = Noto_Sans_Devanagari({
-  variable: "--font-devanagari-sans",
-  subsets: ["devanagari", "latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
 export const metadata: Metadata = {
   title: "Sanskrit Sadhana",
   description: "Master the divine sounds with AI-guided precision.",
@@ -42,7 +36,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${displaySerif.variable} ${devotionalSerif.variable} ${devanagariSans.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${displaySerif.variable} ${devotionalSerif.variable} antialiased`}>
         <AuthProvider>
           <ThemeLayout>
             <AuthGate>{children}</AuthGate>

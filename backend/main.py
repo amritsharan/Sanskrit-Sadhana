@@ -1,5 +1,6 @@
 import os
 import re
+import subprocess
 import sys
 import uuid
 from typing import Any, Optional
@@ -297,6 +298,78 @@ def build_word_mismatch_feedback(reference_text: str, hypothesis_text: str) -> l
 
     return mismatches
 
+
+def preprocess_audio_for_analysis(input_path: str, temp_dir: str) -> str:
+    """Denoise and normalize user audio for more stable pronunciation analysis."""
+    processed_path = os.path.join(temp_dir, f"{uuid.uuid4()}-clean.wav")
+    ffmpeg_cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        input_path,
+        "-ac",
+        "1",
+        "-ar",
+        "16000",
+        "-af",
+        "highpass=f=120,lowpass=f=3800,afftdn=nf=-20",
+        processed_path,
+    ]
+
+    try:
+        subprocess.run(ffmpeg_cmd, check=True, capture_output=True)
+        return processed_path
+    except Exception:
+        # Fallback to original upload if ffmpeg preprocessing fails.
+        return input_path
+
+
+def normalize_token(token: str) -> str:
+    return token.strip().strip(".,;:!?|।॥/\\()[]{}<>\"“”‘’").lower()
+
+
+def is_probably_sanskrit_token(token: str) -> bool:
+    if not token:
+        return False
+
+    # Accept Devanagari directly.
+    if any("\u0900" <= ch <= "\u097F" for ch in token):
+        return True
+
+    # Allow transliteration tokens with common Sanskrit diacritics.
+    if re.fullmatch(r"[a-zāīūṛṝḷṅñṭḍṇśṣḥṃm']+", token):
+        return True
+
+    return False
+
+
+def sanitize_hypothesis_for_sanskrit(reference_text: str, hypothesis_text: str) -> str:
+    """Keep Sanskrit-like words and words close to the reference lexicon."""
+    ref_words = [normalize_token(word) for word in tokenize_words(reference_text)]
+    ref_words = [word for word in ref_words if word]
+    ref_keys = {phoneme_key(word) for word in ref_words}
+    ref_set = set(ref_words)
+
+    sanitized: list[str] = []
+    raw_tokens = [normalize_token(item) for item in re.split(r"\s+", hypothesis_text.strip())]
+
+    for token in raw_tokens:
+        if not token:
+            continue
+
+        if token in ref_set:
+            sanitized.append(token)
+            continue
+
+        if not is_probably_sanskrit_token(token):
+            continue
+
+        token_key = phoneme_key(token)
+        if token_key in ref_keys:
+            sanitized.append(token)
+
+    return " ".join(sanitized)
+
 @app.get("/")
 async def root() -> Any:
     return {
@@ -351,21 +424,29 @@ async def analyze_audio(
     # 1. Save temp file
     temp_dir = "temp_uploads"
     os.makedirs(temp_dir, exist_ok=True)
-    temp_path = os.path.join(temp_dir, f"{uuid.uuid4()}.webm")
+    ext = os.path.splitext(audio.filename or "")[1] or ".webm"
+    temp_path = os.path.join(temp_dir, f"{uuid.uuid4()}{ext}")
     
     with open(temp_path, "wb") as f:
         f.write(await audio.read())
+
+    processed_audio_path = preprocess_audio_for_analysis(temp_path, temp_dir)
         
     try:
         model_instance = get_model()
         # 2. Transcription
         result: Any = model_instance.transcribe(
-            temp_path,
+            processed_audio_path,
             language="sa",
             task="transcribe",
+            initial_prompt=reference_text,
+            temperature=0.0,
+            condition_on_previous_text=False,
+            no_speech_threshold=0.5,
             fp16=False,
         )
-        hyp_text = result.get('text', "")
+        raw_hyp_text = result.get('text', "")
+        hyp_text = sanitize_hypothesis_for_sanskrit(reference_text, raw_hyp_text)
         
         # 3. G2P
         ref_phonemes = text_to_phonemes(reference_text)
@@ -389,6 +470,7 @@ async def analyze_audio(
         
         return {
             "transcript": hyp_text,
+            "raw_transcript": raw_hyp_text,
             "score": results["score"],
             "ref_phonemes": ref_phonemes,
             "hyp_phonemes": hyp_phonemes,
@@ -400,6 +482,8 @@ async def analyze_audio(
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+        if processed_audio_path != temp_path and os.path.exists(processed_audio_path):
+            os.remove(processed_audio_path)
 
 if __name__ == "__main__":
     import uvicorn

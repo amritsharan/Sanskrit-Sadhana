@@ -13,8 +13,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { cn } from './utils/cn';
 import { useAuth } from './context/AuthContext';
 import { ThemeToggle } from "./components/ThemeToggle";
-import { ScrollReveal, ScrollRevealGroup, ScrollRevealChild } from "./components/ScrollReveal";
-import { ModernCard, GradientText, AnimatedButton } from "./components/ModernComponents";
 
 interface AnalysisError {
     description: string;
@@ -661,131 +659,106 @@ export default function Studio() {
     return (
         <div className="relative max-w-6xl mx-auto px-4 py-8 sm:px-6 sm:py-12">
             <div className="absolute inset-x-0 top-6 -z-10 h-56 rounded-[2.5rem] bg-gradient-to-r from-saffron-500/10 via-transparent to-gold-500/10 blur-3xl" />
-            <ScrollReveal direction="down" delay={0} className="mb-10">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="relative mb-10 overflow-hidden rounded-[2rem] border border-white/10 glass px-6 py-8 sm:px-8"
-                >
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(240,106,26,0.16),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(198,177,29,0.18),transparent_26%)]" />
-                    <div className="absolute left-6 top-5 text-6xl text-primary/8 sm:text-8xl">ॐ</div>
-                    <div className="absolute top-4 right-4 z-20 flex max-w-[calc(100%-2rem)] flex-wrap items-center justify-end gap-3">
-                        <ThemeToggle />
-                        {user ? (
-                            <div className="relative">
-                                <button
-                                    onClick={() => setShowHistory(!showHistory)}
-                                    className="flex shrink-0 items-center gap-3 glass px-4 py-2 rounded-full border-white/10 hover:border-primary/30 transition-all"
-                                >
-                                    <span className="text-sm font-medium text-white/70">{user.name}</span>
-                                    <History className="w-4 h-4 text-primary/60" />
-                                </button>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative mb-10 overflow-hidden rounded-[2rem] border border-white/10 glass px-6 py-8 sm:px-8"
+            >
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(240,106,26,0.16),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(198,177,29,0.18),transparent_26%)]" />
+                <div className="absolute left-6 top-5 text-6xl text-primary/8 sm:text-8xl">ॐ</div>
+                <div className="absolute top-4 right-4 z-20 flex max-w-[calc(100%-2rem)] flex-wrap items-center justify-end gap-3">
+                    <ThemeToggle />
+                    {user ? (
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowHistory(!showHistory)}
+                                className="flex shrink-0 items-center gap-3 glass px-4 py-2 rounded-full border-white/10 hover:border-primary/30 transition-all"
+                            >
+                                <span className="text-sm font-medium text-white/70">{user.name}</span>
+                                <History className="w-4 h-4 text-primary/60" />
+                            </button>
 
-                                <AnimatePresence>
-                                    {showHistory && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                            className="absolute top-full right-0 mt-3 w-64 glass rounded-2xl p-4 border-white/10 z-50 shadow-2xl"
-                                        >
-                                            <div className="flex items-center justify-between mb-4">
-                                                <h4 className="text-xs font-bold uppercase tracking-widest text-white/40">Login History</h4>
-                                                <button onClick={logout} className="p-1.5 hover:bg-red-500/10 rounded-lg group">
-                                                    <LogOut className="w-3.5 h-3.5 text-white/30 group-hover:text-red-400 transition-colors" />
-                                                </button>
-                                            </div>
-                                            <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-                                                {user.loginHistory?.map((time, i) => (
-                                                    <div key={i} className="flex items-center gap-2 text-[11px] text-white/60 p-2 rounded-lg bg-white/5">
-                                                        <Clock className="w-3 h-3 text-gold-500/50" />
-                                                        {time}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-2">
-                                <button onClick={() => router.push('/login')} className="btn btn-secondary py-2 px-4 text-sm flex items-center gap-2">
-                                    <LogIn className="w-4 h-4" /> Sign In
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                    <div className="relative z-10 grid gap-8 lg:grid-cols-[1.35fr_0.9fr] lg:items-end">
-                        <div className="text-left">
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.2 }}
-                                className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/8 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] text-primary"
-                            >
-                                <Waves className="h-3.5 w-3.5" />
-                                Gurukula Recitation Chamber
-                            </motion.div>
-                            <motion.h1
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 }}
-                                className="mt-5 font-display text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl"
-                            >
-                                Sanskrit <GradientText>Sadhana</GradientText>
-                            </motion.h1>
-                            <motion.p
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.4 }}
-                                className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg"
-                            >
-                                Enter a practice hall shaped like a modern gurukula: sacred text in front of you, guided
-                                listening at your side, and measured phonetic feedback like a patient guru correcting each sound.
-                            </motion.p>
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.5 }}
-                                className="mt-6 flex flex-wrap items-center gap-3"
-                            >
-                                <Link href="/custom" className="btn btn-primary inline-flex items-center gap-2 text-sm hover:shadow-lg transition-all">
-                                    Custom Practice Mode <ArrowRight className="w-4 h-4" />
-                                </Link>
-                                <Link href="/testyourself" className="btn btn-secondary inline-flex items-center gap-2 text-sm hover:shadow-lg transition-all bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0">
-                                    Test Yourself <Waves className="w-4 h-4" />
-                                </Link>
-                                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-4 py-2 text-xs uppercase tracking-[0.22em] text-muted-foreground">
-                                    <Target className="h-3.5 w-3.5 text-primary" />
-                                    Precision-first chanting
-                                </div>
-                            </motion.div>
+                            <AnimatePresence>
+                                {showHistory && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className="absolute top-full right-0 mt-3 w-64 glass rounded-2xl p-4 border-white/10 z-50 shadow-2xl"
+                                    >
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h4 className="text-xs font-bold uppercase tracking-widest text-white/40">Login History</h4>
+                                            <button onClick={logout} className="p-1.5 hover:bg-red-500/10 rounded-lg group">
+                                                <LogOut className="w-3.5 h-3.5 text-white/30 group-hover:text-red-400 transition-colors" />
+                                            </button>
+                                        </div>
+                                        <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+                                            {user.loginHistory?.map((time, i) => (
+                                                <div key={i} className="flex items-center gap-2 text-[11px] text-white/60 p-2 rounded-lg bg-white/5">
+                                                    <Clock className="w-3 h-3 text-gold-500/50" />
+                                                    {time}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
-
-                        <ScrollRevealGroup staggerDelay={0.15} className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                            <ScrollRevealChild className="rounded-2xl border border-white/10 bg-black/10 px-4 py-4 dark:bg-white/5 hover:border-primary/20 transition-all hover:shadow-lg hover:-translate-y-1">
-                                <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">Shloka Library</p>
-                                <p className="mt-2 text-3xl font-black">{SHLOKAS.length}</p>
-                                <p className="mt-1 text-sm text-muted-foreground">Curated passages waiting for recitation.</p>
-                            </ScrollRevealChild>
-                            <ScrollRevealChild className="rounded-2xl border border-white/10 bg-black/10 px-4 py-4 dark:bg-white/5 hover:border-primary/20 transition-all hover:shadow-lg hover:-translate-y-1">
-                                <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">Guided Method</p>
-                                <p className="mt-2 text-base font-semibold">Listen, chant, refine</p>
-                                <p className="mt-1 text-sm text-muted-foreground">A calmer loop from oral tradition to analysis.</p>
-                            </ScrollRevealChild>
-                            <ScrollRevealChild className="rounded-2xl border border-white/10 bg-black/10 px-4 py-4 dark:bg-white/5 hover:border-primary/20 transition-all hover:shadow-lg hover:-translate-y-1">
-                                <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">Guru&apos;s Note</p>
-                                <p className="mt-2 text-base font-semibold">Every score teaches</p>
-                                <p className="mt-1 text-sm text-muted-foreground">See why a chant landed well and where the next correction belongs.</p>
-                            </ScrollRevealChild>
-                        </ScrollRevealGroup>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => router.push('/login')} className="btn btn-secondary py-2 px-4 text-sm flex items-center gap-2">
+                                <LogIn className="w-4 h-4" /> Sign In
+                            </button>
+                        </div>
+                    )}
+                </div>
+                <div className="relative z-10 grid gap-8 lg:grid-cols-[1.35fr_0.9fr] lg:items-end">
+                    <div className="text-left">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/8 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] text-primary">
+                            <Waves className="h-3.5 w-3.5" />
+                            Gurukula Recitation Chamber
+                        </div>
+                        <h1 className="mt-5 font-display text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
+                            Sanskrit <span className="text-gradient">Sadhana</span>
+                        </h1>
+                        <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
+                            Enter a practice hall shaped like a modern gurukula: sacred text in front of you, guided
+                            listening at your side, and measured phonetic feedback like a patient guru correcting each sound.
+                        </p>
+                        <div className="mt-6 flex flex-wrap items-center gap-3">
+                            <Link href="/custom" className="btn btn-primary inline-flex items-center gap-2 text-sm">
+                                Custom Practice Mode <ArrowRight className="w-4 h-4" />
+                            </Link>
+                            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-4 py-2 text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                                <Target className="h-3.5 w-3.5 text-primary" />
+                                Precision-first chanting
+                            </div>
+                        </div>
                     </div>
-                </motion.div>
-            </ScrollReveal>
+
+                    <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                        <div className="rounded-2xl border border-white/10 bg-black/10 px-4 py-4 dark:bg-white/5">
+                            <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">Shloka Library</p>
+                            <p className="mt-2 text-3xl font-black">{SHLOKAS.length}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">Curated passages waiting for recitation.</p>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-black/10 px-4 py-4 dark:bg-white/5">
+                            <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">Guided Method</p>
+                            <p className="mt-2 text-base font-semibold">Listen, chant, refine</p>
+                            <p className="mt-1 text-sm text-muted-foreground">A calmer loop from oral tradition to analysis.</p>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-black/10 px-4 py-4 dark:bg-white/5">
+                            <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">Guru&apos;s Note</p>
+                            <p className="mt-2 text-base font-semibold">Every score teaches</p>
+                            <p className="mt-1 text-sm text-muted-foreground">See why a chant landed well and where the next correction belongs.</p>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Shloka Selector */}
-                <ScrollReveal direction="left" delay={0.1} className="lg:col-span-1 space-y-4">
+                <div className="lg:col-span-1 space-y-4">
                     <div className="flex items-center justify-between px-2">
                         <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Select Passage</h2>
                         <div className="flex items-center gap-1">
@@ -804,7 +777,7 @@ export default function Studio() {
                                 setSearchTerm(e.target.value);
                                 setCurrentPage(1);
                             }}
-                            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all hover:border-primary/20"
+                            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
                         />
                     </div>
 
@@ -880,10 +853,10 @@ export default function Studio() {
                             );
                         })()}
                     </div>
-                </ScrollReveal>
+                </div>
 
                 {/* Practice Studio */}
-                <ScrollReveal direction="right" delay={0.2} className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-2 space-y-6">
                     {selectedShloka ? (
                         <motion.div
                             key={selectedShloka.id}
@@ -1127,16 +1100,13 @@ export default function Studio() {
                         </div>
                     )}
 
-                </ScrollReveal>
-
-                {/* Results Display */}
+                    {/* Results Display */}
                     {results && (
-                        <ScrollReveal direction="up" className="animate-in">
-                            <motion.div
-                                initial={{ opacity: 0, y: 30 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="space-y-6 animate-in zoom-in-95 duration-500"
-                            >
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="space-y-6 animate-in zoom-in-95 duration-500"
+                        >
                             <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[1.12fr_0.88fr]">
                                 {/* Score Card */}
                                 <div className="glass relative h-full overflow-hidden rounded-[2.25rem] border-white/10 p-6">
@@ -1295,8 +1265,8 @@ export default function Studio() {
                                 </div>
                             </div>
                         </motion.div>
-                    </ScrollReveal>
                     )}
+                </div>
             </div>
         </div>
     );
